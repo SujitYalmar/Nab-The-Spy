@@ -1,0 +1,87 @@
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:gravity="center">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="👤 Create Your Account"
+        android:textAppearance="@style/TextAppearance.Material3.HeadlineMedium"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="32dp"/>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilUsername"
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Enter Username"
+        app:endIconMode="clear_text"
+        app:helperText="This will be your unique username." >
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etUsername"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textPersonName"
+            android:imeOptions="actionNext"/>
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilPin"
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:hint="Enter 8-digit PIN"
+        app:counterEnabled="true"
+        app:counterMaxLength="8"
+        app:endIconMode="password_toggle"
+        app:helperText="Your PIN must be 8 digits long." >
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etPin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberPassword"
+            android:maxLength="8"
+            android:importantForAutofill="no"
+            android:imeOptions="actionNext"/>
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilConfirmPin"
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:hint="Confirm PIN"
+        app:endIconMode="password_toggle" >
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etConfirmPin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberPassword"
+            android:maxLength="8"
+            android:importantForAutofill="no"
+            android:imeOptions="actionDone"/>
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <Button
+        android:id="@+id/btnSavePin"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Save"
+        android:layout_marginTop="32dp"
+        android:paddingVertical="15dp"/>
+
+</LinearLayout>
