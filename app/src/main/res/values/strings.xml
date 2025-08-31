@@ -2,4 +2,14 @@
     <string name="app_name">NabTheSpy</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+
+    <string name="faq_q1_title">What is NabTheSpy?</string>
+    <string name="faq_q1_answer">NabTheSpy is an Android security application designed to detect and record unauthorized access to your device. It uses features like face recognition and screen recording to identify and log suspicious activity, providing you with evidence of any intrusion.</string>
+
+    <string name="faq_q2_title">Is my data secure?</string>
+    <string name="faq_q2_answer">Yes. All sensitive data, including your PIN and stored face embeddings, are encrypted and saved securely in the Android Keystore system. This data does not leave your device and is protected by system-level security.</string>
+
+    <string name="faq_q3_title">Does this app drain the battery?</string>
+    <string name="faq_q3_answer">The app is optimized to have a minimal impact on battery life. Background services only run when necessary, such as immediately after a device unlock event. Continuous monitoring only occurs if you explicitly enable "Watch Mode".</string>
+
 </resources>
