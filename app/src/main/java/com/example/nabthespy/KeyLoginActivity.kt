@@ -6,13 +6,20 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.example.nabthespy.SessionManager
 import com.example.nabthespy.util.SecureStorageHelper
 
 class KeyLoginActivity : AppCompatActivity() {
 
+    // 1. Add a variable for our SessionManager
+    private lateinit var sessionManager: SessionManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_key_login)
+
+        // 2. Initialize the SessionManager
+        sessionManager = SessionManager(this)
 
         val etPin = findViewById<EditText>(R.id.etLoginPin)
         val btnLogin = findViewById<Button>(R.id.btnLoginPin)
@@ -28,16 +35,17 @@ class KeyLoginActivity : AppCompatActivity() {
             } else if (enteredPin == storedPin) {
                 Toast.makeText(this, "Login successful", Toast.LENGTH_SHORT).show()
 
-                // Save login state
-                val sharedPref = getSharedPreferences("user_prefs", MODE_PRIVATE)
-                with(sharedPref.edit()) {
-                    putBoolean("is_logged_in", true)
-                    apply()
-                }
+                // --- FIX #1: Use SessionManager ---
+                // This ensures SplashActivity knows the user is logged in.
+                sessionManager.setLogin(true)
 
-                // --- CHANGE IS HERE ---
-                // Start MainActivity instead of HomeActivity
-                startActivity(Intent(this, MainActivity::class.java))
+                // --- FIX #2: Navigate to HomeActivity ---
+                // This sends the user to the correct home page.
+                val intent = Intent(this, HomeActivity::class.java)
+
+                // Add flags to clear the navigation history so the user can't go back to the login screen.
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                startActivity(intent)
                 finish()
             } else {
                 Toast.makeText(this, "Incorrect PIN. Try again.", Toast.LENGTH_SHORT).show()
@@ -45,3 +53,4 @@ class KeyLoginActivity : AppCompatActivity() {
         }
     }
 }
+
