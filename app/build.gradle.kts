@@ -52,6 +52,9 @@ dependencies {
     implementation(libs.androidx.junit.ktx)
     implementation(libs.androidx.junit)
     implementation(libs.androidx.activity)
+    implementation(libs.androidx.camera.view)
+    implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.navigation.fragment)
     val composeBom = platform("androidx.compose:compose-bom:2024.08.00")
     implementation(composeBom)
     androidTestImplementation(composeBom)
@@ -88,4 +91,23 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+    // ML Kit for Face Detection
+    implementation("com.google.mlkit:face-detection:16.1.6")
+
+    // TensorFlow Lite for the FaceNet model
+    implementation("org.tensorflow:tensorflow-lite:2.14.0")
+    implementation("org.tensorflow:tensorflow-lite-support:0.4.4")
+    // In build.gradle.kts (Module: app)
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
+
+    // CameraX for easy camera access
+    val cameraxVersion = "1.3.3" // Use the latest stable version
+    implementation("androidx.camera:camera-core:$cameraxVersion")
+    implementation("androidx.camera:camera-lifecycle:$cameraxVersion")
+    implementation("androidx.camera:camera-view:$cameraxVersion")
+
+    // THIS IS THE LINE THAT WILL FIX THE CRASH
+    implementation("androidx.camera:camera-camera2:$cameraxVersion")
+
+
 }
