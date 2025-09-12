@@ -42,6 +42,7 @@ android {
 
     buildFeatures {
         compose = true   // ✅ Enable Jetpack Compose
+        viewBinding = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.15"
@@ -108,6 +109,7 @@ dependencies {
 
     // THIS IS THE LINE THAT WILL FIX THE CRASH
     implementation("androidx.camera:camera-camera2:$cameraxVersion")
+    implementation("androidx.security:security-crypto:1.0.0")
 
 
 }

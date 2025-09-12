@@ -11,5 +11,8 @@
 
     <string name="faq_q3_title">Does this app drain the battery?</string>
     <string name="faq_q3_answer">The app is optimized to have a minimal impact on battery life. Background services only run when necessary, such as immediately after a device unlock event. Continuous monitoring only occurs if you explicitly enable "Watch Mode".</string>
+    <string name="faq">FAQ</string>
+    <string name="about">About</string>
+    <string name="home">Home</string>
 
 </resources>
