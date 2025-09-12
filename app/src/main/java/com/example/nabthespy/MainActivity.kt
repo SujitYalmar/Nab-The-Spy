@@ -5,59 +5,62 @@ import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
-import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.example.nabthespy.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
 
+    private lateinit var binding: ActivityMainBinding
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        // --- 1. SET UP THE TOP APP BAR (TOOLBAR) ---
-        val topAppBar: Toolbar = findViewById(R.id.top_app_bar)
-        setSupportActionBar(topAppBar)
-        // -----------------------------------------
+        // Set up the top app bar
+        setSupportActionBar(binding.topAppBar)
 
-        val bottomNavigation: BottomNavigationView = findViewById(R.id.bottom_navigation)
-
-        // Set the default fragment and title
+        // Load the HomeFragment by default when the app starts
         if (savedInstanceState == null) {
-            supportActionBar?.title = "NabTheSpy" // Set initial title
+            supportActionBar?.title = "Control Panel"
             loadFragment(HomeFragment())
         }
 
-        // Set the listener for navigation item selections
-        bottomNavigation.setOnItemSelectedListener { item ->
-            val selectedFragment: Fragment
-            // --- CHANGE IS HERE ---
-            // Update the title based on the selected item
+        // --- THIS IS THE CRITICAL CODE THAT MAKES NAVIGATION WORK ---
+        // It listens for which item is clicked in the bottom navigation bar
+        binding.bottomNavigation.setOnItemSelectedListener { item ->
             when (item.itemId) {
+                // When the Home item is clicked
+                R.id.nav_home -> {
+                    supportActionBar?.title = "Control Panel"
+                    loadFragment(HomeFragment())
+                    true
+                }
+                // When the About item is clicked
                 R.id.nav_about -> {
                     supportActionBar?.title = "About Us"
-                    selectedFragment = AboutFragment()
+                    loadFragment(AboutFragment())
+                    true
                 }
+                // When the FAQ item is clicked
                 R.id.nav_faq -> {
                     supportActionBar?.title = "FAQ"
-                    selectedFragment = FaqFragment()
+                    loadFragment(FaqFragment())
+                    true
                 }
-                else -> { // R.id.nav_home
-                    supportActionBar?.title = "Control Panel"
-                    selectedFragment = HomeFragment()
-                }
+                else -> false
             }
-            loadFragment(selectedFragment)
-            true
         }
     }
 
+    // A helper function to replace the current fragment with a new one
     private fun loadFragment(fragment: Fragment) {
         supportFragmentManager.beginTransaction()
-            .replace(R.id.fragment_container, fragment)
+            .replace(binding.fragmentContainer.id, fragment)
             .commit()
     }
 
+    // --- Optional: Code for handling clicks on the top app bar menu (e.g., notifications) ---
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.top_app_bar_menu, menu)
         return true
