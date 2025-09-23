@@ -8,7 +8,7 @@
 
     <item
         android:id="@+id/nav_sessions"
-        android:icon="@drawable/selector_faq_icon"
+        android:icon="@drawable/ic_no_sessions"
         android:title="Sessions" />
 
     <item
