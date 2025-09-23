@@ -7,7 +7,6 @@
     android:layout_height="match_parent"
     android:fillViewport="true"
     android:padding="24dp"
-    android:background="?attr/colorSurfaceContainerLowest"
     tools:context=".HomeFragment">
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -30,8 +29,44 @@
                 android:orientation="vertical"
                 android:padding="24dp">
 
-            </LinearLayout>
+                <ImageView
+                    android:id="@+id/card_icon"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginBottom="16dp"
+                    android:src="@drawable/ic_security_shield"
+                    app:tint="?attr/colorPrimary"
+                    android:contentDescription="Security Shield Icon"/>
 
+                <TextView
+                    android:id="@+id/card_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="Your Privacy Guardian"
+                    android:textAppearance="?attr/textAppearanceHeadlineSmall"
+                    android:layout_marginBottom="8dp"/>
+
+                <TextView
+                    android:id="@+id/card_description"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:text="Your device is now secure. The app uses face recognition to verify your identity at every unlock. Any unauthorized access will trigger Watch Mode."
+                    android:textAppearance="?attr/textAppearanceBodyMedium"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:lineSpacingExtra="4dp"/>
+
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/monitoring_switch"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="24dp"
+                    android:text="Enable Monitoring" />
+
+            </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>
