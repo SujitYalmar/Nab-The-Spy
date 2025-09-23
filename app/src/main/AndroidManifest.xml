@@ -5,8 +5,9 @@
     <uses-feature
         android:name="android.hardware.camera.any"
         android:required="true" />
-
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
 
 
     <application
@@ -28,24 +29,36 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name=".MainActivity"
-            android:exported="false" />
+        <activity android:name=".MainActivity" android:exported="false" />
+        <activity android:name=".KeySetupActivity" android:exported="false" />
+        <activity android:name=".KeyLoginActivity" android:exported="false" />
+        <activity android:name=".HomeActivity" android:exported="false" />
+        <activity android:name=".FaceRegistrationActivity" android:exported="false" />
+        <activity android:name=".SessionDetailActivity" android:exported="false" />
 
         <activity
-            android:name=".KeySetupActivity"
-            android:exported="false" />
+            android:name=".CameraCaptureActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Transparent" />
 
-        <activity
-            android:name=".KeyLoginActivity"
-            android:exported="false" />
+        <service android:name=".FaceCaptureService" />
 
-        <activity
-            android:name=".HomeActivity"
-            android:exported="false" />
-        <activity
-            android:name=".FaceRegistrationActivity"
-            android:exported="false" />
+        <service
+            android:name=".WatchModeService"
+            android:foregroundServiceType="mediaProjection" />
+
+        <receiver
+            android:name=".UnlockReceiver"
+            android:enabled="true"
+            android:exported="true"  tools:ignore="ExportedReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.USER_PRESENT" />
+            </intent-filter>
+        </receiver>
+
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3940256099942544~3347511713"/>
 
     </application>
 

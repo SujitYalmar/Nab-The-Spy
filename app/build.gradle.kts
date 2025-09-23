@@ -111,5 +111,9 @@ dependencies {
     implementation("androidx.camera:camera-camera2:$cameraxVersion")
     implementation("androidx.security:security-crypto:1.0.0")
 
+    implementation("com.github.bumptech.glide:glide:4.12.0")
+
+    // ADD THIS LINE for Google Material Components
+    implementation("com.google.android.material:material:1.11.0")
 
 }

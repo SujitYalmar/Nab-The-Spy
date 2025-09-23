@@ -7,6 +7,11 @@
         android:title="@string/home" />
 
     <item
+        android:id="@+id/nav_sessions"
+        android:icon="@drawable/selector_faq_icon"
+        android:title="Sessions" />
+
+    <item
         android:id="@+id/nav_about"
         android:icon="@drawable/selector_about_icon"
         android:title="@string/about" />
