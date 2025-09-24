@@ -1,5 +1,3 @@
-// File: com/example/nabthespy/KeyLoginActivity.kt
-
 package com.example.nabthespy
 
 import android.content.Intent
@@ -13,11 +11,13 @@ import com.google.android.material.textfield.TextInputEditText
 
 class KeyLoginActivity : AppCompatActivity() {
 
+    private lateinit var sessionManager: SessionManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_key_login)
 
-        // SessionManager has been removed as it's not needed.
+        sessionManager = SessionManager(this)
 
         val etPin = findViewById<TextInputEditText>(R.id.etLoginPin)
         val btnLogin = findViewById<Button>(R.id.btnLoginPin)
@@ -33,9 +33,11 @@ class KeyLoginActivity : AppCompatActivity() {
             } else if (enteredPin == storedPin) {
                 Toast.makeText(this, "Login successful", Toast.LENGTH_SHORT).show()
 
-                // Simply navigate to the HomeActivity.
-                // The app's persistent "logged in" state is already handled by
-                // the 'is_setup_complete' flag you set during face registration.
+                // CHANGE THIS LINE:
+                // Instead of just setting login to true, we now also save the user's PIN.
+                sessionManager.createLoginSession(enteredPin)
+
+                // Now, navigate to the HomeActivity.
                 val intent = Intent(this, HomeActivity::class.java)
                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                 startActivity(intent)
