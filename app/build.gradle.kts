@@ -116,4 +116,7 @@ dependencies {
     // ADD THIS LINE for Google Material Components
     implementation("com.google.android.material:material:1.11.0")
 
+    // ADD THIS LINE for LifecycleService
+    implementation("androidx.lifecycle:lifecycle-service:2.8.2")
+
 }
