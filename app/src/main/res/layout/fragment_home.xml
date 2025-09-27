@@ -53,18 +53,19 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center"
-                    android:text="Your device is now secure. The app uses face recognition to verify your identity at every unlock. Any unauthorized access will trigger Watch Mode."
+                    android:text="Press 'Start Watch Mode' to begin monitoring. The service will run in the background and capture data on the next unlock."
                     android:textAppearance="?attr/textAppearanceBodyMedium"
                     android:textColor="?attr/colorOnSurfaceVariant"
                     android:lineSpacingExtra="4dp"/>
 
-                <com.google.android.material.switchmaterial.SwitchMaterial
-                    android:id="@+id/monitoring_switch"
+                <!-- This Button replaces the old Switch -->
+                <Button
+                    android:id="@+id/btnToggleWatchMode"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center_horizontal"
                     android:layout_marginTop="24dp"
-                    android:text="Enable Monitoring" />
+                    tools:text="Start Watch Mode" />
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>

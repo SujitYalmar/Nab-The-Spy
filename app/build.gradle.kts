@@ -56,6 +56,7 @@ dependencies {
     implementation(libs.androidx.camera.view)
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.navigation.fragment)
+    implementation(libs.androidx.material3)
     val composeBom = platform("androidx.compose:compose-bom:2024.08.00")
     implementation(composeBom)
     androidTestImplementation(composeBom)

@@ -1,99 +1,79 @@
 package com.example.nabthespy
 
-import android.Manifest
+import android.app.ActivityManager
+import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.net.Uri
-import android.os.Build
 import android.os.Bundle
-import android.provider.Settings
 import android.view.View
+import android.widget.Button
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import com.google.android.material.switchmaterial.SwitchMaterial
 
 class HomeFragment : Fragment(R.layout.fragment_home) {
 
-    private lateinit var sessionManager: SessionManager
-    private lateinit var switchWatchMode: SwitchMaterial
-
-    // This launcher handles the results of asking for permissions.
-    private val permissionsLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
-            // This code runs after the user responds to the permission dialog
-            val allGranted = permissions.entries.all { it.value }
-            if (allGranted) {
-                // If they granted everything, we can now enable the feature
-                enableWatchMode(true)
-                switchWatchMode.isChecked = true
-            } else {
-                Toast.makeText(requireContext(), "All permissions are required for Watch Mode.", Toast.LENGTH_LONG).show()
-            }
-        }
+    private lateinit var btnToggleWatchMode: Button
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        sessionManager = SessionManager(requireContext())
-        switchWatchMode = view.findViewById(R.id.monitoring_switch)
+        btnToggleWatchMode = view.findViewById(R.id.btnToggleWatchMode)
 
-        // Set the switch's initial state
-        switchWatchMode.isChecked = sessionManager.isWatchModeEnabled()
+        // Set the initial button text when the screen loads
+        updateButtonState()
 
-        // When the user taps the switch...
-        switchWatchMode.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                // ...if they are turning it ON, check for all permissions first.
-                checkAndRequestPermissions()
+        btnToggleWatchMode.setOnClickListener {
+            if (isServiceRunning(WatchModeService::class.java)) {
+                // If the service is currently running, stop it
+                stopWatchModeService()
             } else {
-                // ...if they are turning it OFF, just disable it.
-                enableWatchMode(false)
+                // If the service is not running, start it
+                startWatchModeService()
             }
         }
     }
 
-    private fun checkAndRequestPermissions() {
-        // --- Step 1: Check for "Display over other apps" ---
-        if (!Settings.canDrawOverlays(requireContext())) {
-            Toast.makeText(requireContext(), "Please grant 'Display over other apps' permission", Toast.LENGTH_LONG).show()
-            val intent = Intent(
-                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                Uri.parse("package:${requireActivity().packageName}")
-            )
-            startActivity(intent)
-            switchWatchMode.isChecked = false
-            return
-        }
+    override fun onResume() {
+        super.onResume()
+        // Update the button state every time the user returns to this screen
+        updateButtonState()
+    }
 
-        // --- Step 2: Check for standard runtime permissions ---
-        val permissionsToRequest = mutableListOf<String>()
+    private fun startWatchModeService() {
+        Toast.makeText(requireContext(), "Watch Mode Started", Toast.LENGTH_SHORT).show()
+        val serviceIntent = Intent(requireContext(), WatchModeService::class.java)
+        // Use startForegroundService for modern Android versions
+        ContextCompat.startForegroundService(requireContext(), serviceIntent)
+        updateButtonState()
+    }
 
-        // Notification permission is REQUIRED for Android 13+
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS)
-            }
-        }
+    private fun stopWatchModeService() {
+        Toast.makeText(requireContext(), "Watch Mode Stopped", Toast.LENGTH_SHORT).show()
+        val serviceIntent = Intent(requireContext(), WatchModeService::class.java)
+        requireContext().stopService(serviceIntent)
+        updateButtonState()
+    }
 
-        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            permissionsToRequest.add(Manifest.permission.CAMERA)
-        }
-
-        // --- Step 3: Act on the results ---
-        if (permissionsToRequest.isNotEmpty()) {
-            permissionsLauncher.launch(permissionsToRequest.toTypedArray())
-            switchWatchMode.isChecked = false
+    private fun updateButtonState() {
+        if (isServiceRunning(WatchModeService::class.java)) {
+            btnToggleWatchMode.text = "Stop Watch Mode"
         } else {
-            enableWatchMode(true)
+            btnToggleWatchMode.text = "Start Watch Mode"
         }
     }
 
-    private fun enableWatchMode(isEnabled: Boolean) {
-        sessionManager.setWatchModeEnabled(isEnabled)
-        val status = if (isEnabled) "Enabled" else "Disabled"
-        Toast.makeText(requireContext(), "Monitoring $status", Toast.LENGTH_SHORT).show()
+    // A helper function to check if our service is currently running
+    @Suppress("DEPRECATION")
+
+
+    private fun isServiceRunning(serviceClass: Class<*>): Boolean {
+        val manager = requireActivity().getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        for (service in manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.name == service.service.className) {
+                return true
+            }
+        }
+        return false
     }
 }
 

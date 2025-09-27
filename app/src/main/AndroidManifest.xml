@@ -2,18 +2,26 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- All necessary permissions -->
+    <!-- Required features and permissions -->
     <uses-feature
         android:name="android.hardware.camera.any"
         android:required="true" />
+
+    <!-- Camera + Storage permissions -->
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+
+    <!-- Foreground service permissions -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
-    <!-- ADDED: This permission is REQUIRED for notifications on Android 13+ -->
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+
+    <!-- Notifications (Android 13+) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Boot + overlay -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-
 
     <application
         android:allowBackup="true"
@@ -25,7 +33,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Nabthespy">
 
-        <!-- Your Activities... -->
+        <!-- Launcher Activity -->
         <activity
             android:name=".SplashActivity"
             android:exported="true">
@@ -34,6 +42,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <activity android:name=".MainActivity" android:exported="false" />
         <activity android:name=".KeySetupActivity" android:exported="false" />
         <activity android:name=".KeyLoginActivity" android:exported="false" />
@@ -45,7 +54,7 @@
             android:exported="false"
             android:theme="@style/Theme.Transparent" />
 
-        <!-- Your Services... -->
+        <!-- Services -->
         <service android:name=".FaceCaptureService" />
         <service
             android:name=".WatchModeService"
@@ -54,7 +63,7 @@
             android:foregroundServiceType="mediaProjection|camera"
             tools:ignore="ForegroundServicePermission" />
 
-        <!-- Receiver correctly configured -->
+        <!-- Receiver -->
         <receiver
             android:name=".UnlockReceiver"
             android:enabled="true"
@@ -65,12 +74,10 @@
             </intent-filter>
         </receiver>
 
-        <!-- Your Meta-Data... -->
+        <!-- Meta-Data -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-3940256099942544~3347511713"/>
 
     </application>
-
 </manifest>
-
