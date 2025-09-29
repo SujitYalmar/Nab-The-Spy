@@ -42,3 +42,24 @@ It leverages **biometric authentication, face recognition, session logging, and 
 
 <img width="635" height="777" alt="image" src="https://github.com/user-attachments/assets/08996cca-981a-4765-9dd2-ed2fd57317e3" />
 
+## 📸 How it Works  
+1. Unlock phone → app captures your face after 3 seconds.  
+2. If intruder detected → **Watch Mode starts**.  
+3. Screenshots are taken **every 10 seconds** until session ends.  
+4. Owner can view intruder sessions with face + screen activity timeline.  
+
+---
+
+## 🔮 Future Enhancements  
+- Overlay intruder’s face on screenshots using **FFmpeg**.  
+- **Cloud backup** of intruder sessions.  
+- **Real-time alerts** (email/notification).  
+
+---
+
+## 📱 Tech Stack  
+- **Android (Kotlin)**  
+- **CameraX + ML Kit**  
+- **TensorFlow Lite (FaceNet)**  
+- **MediaProjection API**  
+
