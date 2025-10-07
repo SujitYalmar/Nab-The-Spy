@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="card_description" type="id" />
+    <item name="monitoring_switch" type="id" />
+    <item name="card_title" type="id" />
+    <item name="card_icon" type="id" />
+</resources>
