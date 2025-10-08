@@ -17,7 +17,6 @@ import android.os.Looper
 import android.util.Log
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.compose.material3.Surface
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleService
@@ -28,7 +27,7 @@ import java.io.IOException
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-// MUST extend LifecycleService to use CameraX from a background service
+// ✅ Extends LifecycleService for CameraX compatibility
 class WatchModeService : LifecycleService() {
 
     private lateinit var sessionManager: SessionManager
@@ -39,10 +38,11 @@ class WatchModeService : LifecycleService() {
 
     private val handler = Handler(Looper.getMainLooper())
     private var screenshotCount = 0
+
     private val screenshotRunnable = object : Runnable {
         override fun run() {
             captureScreen()
-            // Schedule the next capture in 10 seconds
+            // Capture every 10 seconds
             handler.postDelayed(this, 10000)
         }
     }
@@ -86,7 +86,7 @@ class WatchModeService : LifecycleService() {
 
                 val cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
 
-                // ✅ Dummy preview to keep CameraX happy
+                // Dummy preview (CameraX requires a surface)
                 val preview = Preview.Builder().build()
                 preview.setSurfaceProvider { request ->
                     request.provideSurface(
@@ -124,31 +124,70 @@ class WatchModeService : LifecycleService() {
         }, ContextCompat.getMainExecutor(this))
     }
 
+    /**
+     * ✅ Fixed: Proper MediaProjection setup for Android 14/15 and Samsung devices
+     */
     private fun startScreenshotLoop() {
         Log.d(TAG, "Initializing screen capture.")
         val resultCode = AppMediaProjectionManager.resultCode
         val projectionIntent = AppMediaProjectionManager.projectionIntent
 
         if (resultCode != 0 && projectionIntent != null) {
-            val mediaProjectionManager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+            val mediaProjectionManager =
+                getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
             mediaProjection = mediaProjectionManager.getMediaProjection(resultCode, projectionIntent)
 
-            val metrics = resources.displayMetrics
-            imageReader = ImageReader.newInstance(metrics.widthPixels, metrics.heightPixels, PixelFormat.RGBA_8888, 2)
+            val projection = mediaProjection ?: run {
+                Log.e(TAG, "MediaProjection is null.")
+                stopSelf()
+                return
+            }
 
-            mediaProjection?.createVirtualDisplay(
-                "ScreenCapture",
-                metrics.widthPixels, metrics.heightPixels, metrics.densityDpi,
-                DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR, imageReader?.surface, null, null
+            val metrics = resources.displayMetrics
+            imageReader = ImageReader.newInstance(
+                metrics.widthPixels,
+                metrics.heightPixels,
+                PixelFormat.RGBA_8888,
+                2
             )
 
-            handler.post(screenshotRunnable)
+            // ✅ Register callback BEFORE creating VirtualDisplay (Android 14+ requirement)
+            projection.registerCallback(object : MediaProjection.Callback() {
+                override fun onStop() {
+                    super.onStop()
+                    Log.d(TAG, "MediaProjection stopped.")
+                    imageReader?.close()
+                    handler.removeCallbacks(screenshotRunnable)
+                }
+            }, handler)
+
+            try {
+                projection.createVirtualDisplay(
+                    "ScreenCapture",
+                    metrics.widthPixels,
+                    metrics.heightPixels,
+                    metrics.densityDpi,
+                    DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
+                    imageReader?.surface,
+                    null,
+                    handler
+                )
+                Log.d(TAG, "Virtual display created successfully. Starting screenshot loop.")
+                handler.post(screenshotRunnable)
+
+            } catch (e: IllegalStateException) {
+                Log.e(TAG, "Failed to create virtual display: ${e.message}", e)
+                stopSelf()
+            }
         } else {
             Log.e(TAG, "MediaProjection permission is missing. Stopping service.")
             stopSelf()
         }
     }
 
+    /**
+     * Capture screen frame from ImageReader
+     */
     private fun captureScreen() {
         val image = imageReader?.acquireLatestImage() ?: return
         val planes = image.planes
@@ -157,12 +196,16 @@ class WatchModeService : LifecycleService() {
         val rowStride = planes[0].rowStride
         val rowPadding = rowStride - pixelStride * image.width
 
-        val bitmap = Bitmap.createBitmap(image.width + rowPadding / pixelStride, image.height, Bitmap.Config.ARGB_8888)
+        val bitmap = Bitmap.createBitmap(
+            image.width + rowPadding / pixelStride,
+            image.height,
+            Bitmap.Config.ARGB_8888
+        )
         bitmap.copyPixelsFromBuffer(buffer)
         image.close()
 
         sessionManager.saveScreenCapture(sessionDir, bitmap, screenshotCount)
-        Log.d(TAG, "Saved screen capture #${screenshotCount}")
+        Log.d(TAG, "Saved screen capture #$screenshotCount")
         screenshotCount++
     }
 
@@ -173,7 +216,6 @@ class WatchModeService : LifecycleService() {
                 bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
             }
         } catch (e: IOException) {
-            e.printStackTrace()
             Log.e(TAG, "Failed to save selfie.", e)
         }
     }
@@ -207,7 +249,9 @@ class WatchModeService : LifecycleService() {
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("NabTheSpy is Active")
             .setContentText("Monitoring for unauthorized access.")
-            .setSmallIcon(R.drawable.ic_security_shield) // Make sure this drawable exists
+            .setSmallIcon(R.drawable.ic_security_shield)
+            .setOngoing(true) // Keeps service alive
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
             .build()
     }
 
