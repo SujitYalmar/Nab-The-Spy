@@ -39,8 +39,64 @@ It leverages **biometric authentication, face recognition, session logging, and 
 ---
 
 ## 🏗 Project Structure  
-
-<img width="635" height="777" alt="image" src="https://github.com/user-attachments/assets/08996cca-981a-4765-9dd2-ed2fd57317e3" />
+```text
+src
+└── main
+    ├── java
+    │   └── com
+    │       └── example
+    │           └── nabthespy
+    │               ├── ml                       // Machine Learning models or helpers
+    │               ├── util                     // Utility classes and helpers
+    │               │   ├── MediaProjectionManager.java
+    │               │   ├── SecureStorageHelper.java
+    │               │   └── util.kt
+    │               ├── AboutFragment.java
+    │               ├── CameraCaptureActivity.java
+    │               ├── CaptureAdapter.java
+    │               ├── FaceCaptureService.java
+    │               ├── FaceRegistrationActivity.java
+    │               ├── FaqFragment.java
+    │               ├── HomeActivity.java
+    │               ├── HomeFragment.java
+    │               ├── ImageAdapter.java
+    │               ├── KeyLoginActivity.java
+    │               ├── KeySetupActivity.java
+    │               ├── MainActivity.java
+    │               ├── RecordedSessionFragment.java
+    │               ├── SessionAdapter.kt
+    │               ├── SessionDetailActivity.java
+    │               ├── SessionManager.java
+    │               ├── SplashActivity.java
+    │               ├── UnlockReceiver.java
+    │               └── WatchModeService.java
+    └── res
+        ├── anim                                 // Animation resources
+        ├── drawable                             // Drawable resources (icons, shapes)
+        ├── layout                               // XML layout files for activities and fragments
+        │   ├── activity_face_registration.xml
+        │   ├── activity_home.xml
+        │   ├── activity_key_login.xml
+        │   ├── activity_key_setup.xml
+        │   ├── activity_main.xml
+        │   ├── activity_recorded_session.xml
+        │   ├── activity_session_detail.xml
+        │   ├── activity_splash.xml
+        │   ├── capture_item.xml
+        │   ├── fragment_about.xml
+        │   ├── fragment_faq.xml
+        │   ├── fragment_home.xml
+        │   ├── fragment_recorded_session.xml
+        │   └── session_item.xml
+        ├── menu                                 // Menu resource files
+        │   ├── bottom_nav_menu.xml
+        │   └── top_app_bar_menu.xml
+        ├── mipmap-* // App icons for different screen densities
+        ├── navigation                           // Navigation graph files
+        └── values                               // Resource files for strings, colors, styles
+            ├── values.xml
+            └── values-night.xml                 // Resources for night mode
+```
 
 ## 📸 How it Works  
 1. Unlock phone → app captures your face after 3 seconds.  
