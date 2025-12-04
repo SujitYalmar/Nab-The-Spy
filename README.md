@@ -39,6 +39,7 @@ It leverages **biometric authentication, face recognition, session logging, and 
 ---
 
 ## 🏗 Project Structure  
+The app follows a modular structure with clear separation of concerns in the main Android module.
 ```text
 src
 └── main
