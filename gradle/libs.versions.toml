@@ -1,37 +1,54 @@
 [versions]
-agp = "8.13.0"
+agp = "8.3.2"                 # stable with SDK 35
 kotlin = "2.0.21"
-coreKtx = "1.17.0"
+
+# 🔴 FIX HERE (DOWNGRADED)
+coreKtx = "1.13.1"             # ✅ LAST version that supports compileSdk 35
+
 junit = "4.13.2"
 junitVersion = "1.3.0"
 espressoCore = "3.7.0"
-appcompat = "1.7.1"
-material = "1.12.0"
-activity = "1.10.1"
+appcompat = "1.7.0"
+material = "1.13.0"
+activity = "1.9.2"
 constraintlayout = "2.2.1"
 junitKtx = "1.3.0"
-cameraView = "1.4.2"
-cameraLifecycle = "1.4.2"
-navigationFragment = "2.9.3"
-material3 = "1.4.0"
+
+# CameraX (STABLE)
+cameraView = "1.3.4"
+cameraLifecycle = "1.3.4"
+
+navigationFragment = "2.8.3"
+material3 = "1.3.1"
+junitJunit = "4.12"
+monitor = "1.8.0"
 
 [libraries]
-androidx-activity-compose = { module = "androidx.activity:activity-compose" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
-junit = { group = "junit", name = "junit", version.ref = "junit" }
-androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
-androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+androidx-core = { group = "androidx.core", name = "core", version.ref = "coreKtx" }
+
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+
 androidx-activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activity" }
+
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
-androidx-junit-ktx = { group = "androidx.test.ext", name = "junit-ktx", version.ref = "junitKtx" }
+
 androidx-camera-view = { group = "androidx.camera", name = "camera-view", version.ref = "cameraView" }
 androidx-camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "cameraLifecycle" }
-androidx-navigation-fragment = { group = "androidx.navigation", name = "navigation-fragment", version.ref = "navigationFragment" }
+
+androidx-navigation-fragment = { group = "androidx.navigation", name = "navigation-fragment-ktx", version.ref = "navigationFragment" }
+
 androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
+
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
+androidx-junit-ktx = { group = "androidx.test.ext", name = "junit-ktx", version.ref = "junitKtx" }
+androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+junit-junit = { group = "junit", name = "junit", version.ref = "junitJunit" }
+androidx-monitor = { group = "androidx.test", name = "monitor", version.ref = "monitor" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
-

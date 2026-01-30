@@ -1,52 +1,72 @@
 package com.example.nabthespy
 
-import android.app.Activity
 import android.os.Bundle
 import android.widget.Button
 import android.widget.ImageView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class SessionDetailActivity : AppCompatActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_session_detail)
 
-        val mainSnapshotImageView: ImageView = findViewById(R.id.detailSnapshotImageView)
-        val capturesRecyclerView: RecyclerView = findViewById(R.id.capturesRecyclerView)
+        val imageView: ImageView = findViewById(R.id.detailSnapshotImageView)
+        val timeText: TextView = findViewById(R.id.detailTimestampTextView)
         val deleteButton: Button = findViewById(R.id.deleteButton)
 
-        val snapshotPath = intent.getStringExtra("SNAPSHOT_PATH")
-        val sessionDir = snapshotPath?.let { File(it).parentFile }
+        val imagePath = intent.getStringExtra("SNAPSHOT_PATH")
+        val timestamp = intent.getLongExtra("TIMESTAMP", 0L)
 
-        if (sessionDir != null && sessionDir.exists()) {
-            // Load the main intruder snapshot
-            Glide.with(this).load(File(snapshotPath)).into(mainSnapshotImageView)
-
-            // Find all screen captures, sort them by name
-            val captureFiles = sessionDir.listFiles { _, name -> name.startsWith("capture_") }
-                ?.map { it.absolutePath }
-                ?.sorted()
-                ?: emptyList()
-
-            // Set up the horizontal RecyclerView for thumbnails
-            capturesRecyclerView.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
-            capturesRecyclerView.adapter = CaptureAdapter(captureFiles) { clickedCapturePath ->
-                // When a thumbnail is clicked, update the main image view
-                Glide.with(this).load(File(clickedCapturePath)).into(mainSnapshotImageView)
-            }
-
-            // Set up the delete button
-            deleteButton.setOnClickListener {
-                sessionDir.deleteRecursively()
-                Toast.makeText(this, "Session deleted", Toast.LENGTH_SHORT).show()
-                setResult(Activity.RESULT_OK)
-                finish()
-            }
+        if (imagePath == null || !File(imagePath).exists()) {
+            Toast.makeText(this, "Session image not found", Toast.LENGTH_SHORT).show()
+            finish()
+            return
         }
+
+        // 🖼 Show image
+        Glide.with(this)
+            .load(File(imagePath))
+            .into(imageView)
+
+        // 🕒 Show time
+        val formattedTime = SimpleDateFormat(
+            "dd MMM yyyy • hh:mm a",
+            Locale.getDefault()
+        ).format(Date(timestamp))
+
+        timeText.text = formattedTime
+
+        // 🗑 Delete session
+        deleteButton.setOnClickListener {
+            deleteSession(imagePath)
+            Toast.makeText(this, "Session deleted", Toast.LENGTH_SHORT).show()
+            finish()
+        }
+    }
+
+    private fun deleteSession(imagePath: String) {
+        // Remove image file
+        File(imagePath).delete()
+
+        // Remove session from SessionManager
+        val sessions = SessionManager
+            .getSessions(this)
+            .filterNot { it.snapshotPath == imagePath }
+
+        val prefs = getSharedPreferences("AppPrefs", MODE_PRIVATE)
+        prefs.edit()
+            .putString(
+                "sessions",
+                com.google.gson.Gson().toJson(sessions)
+            )
+            .apply()
     }
 }

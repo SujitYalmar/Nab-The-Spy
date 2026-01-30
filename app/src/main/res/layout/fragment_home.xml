@@ -54,19 +54,10 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center"
-                    android:text="Press 'Start Watch Mode' to begin monitoring. The service will run in the background and capture data on the next unlock."
+                    android:text="Protection is now automatic. The service runs in the background to detect and capture data after every device unlock."
                     android:textAppearance="?attr/textAppearanceBodyMedium"
                     android:textColor="?attr/colorOnSurfaceVariant"
                     android:lineSpacingExtra="4dp"/>
-
-                <!-- This Button replaces the old Switch -->
-                <Button
-                    android:id="@+id/btnToggleWatchMode"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_horizontal"
-                    android:layout_marginTop="24dp"
-                    tools:text="Start Watch Mode" />
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
