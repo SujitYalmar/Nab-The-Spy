@@ -5,195 +5,202 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
-import android.graphics.*
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.PixelFormat
+import android.graphics.SurfaceTexture
 import android.hardware.display.DisplayManager
 import android.media.ImageReader
 import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
 import android.os.Build
 import android.os.Handler
-import android.os.IBinder
 import android.os.Looper
 import android.util.Log
-import androidx.camera.core.*
+import android.view.Surface
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
+import androidx.camera.core.ImageProxy
+import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleService
-import com.example.nabthespy.util.MediaProjectionManager as AppMediaProjectionManager
+import com.example.nabthespy.util.FaceRecognizer
+import com.example.nabthespy.util.SecureStorageHelper
 import java.io.File
 import java.io.FileOutputStream
-import java.io.IOException
-import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import com.example.nabthespy.util.MediaProjectionManager as AppMediaProjectionManager
 
-// ✅ Extends LifecycleService for CameraX compatibility
 class WatchModeService : LifecycleService() {
 
-    private lateinit var sessionManager: SessionManager
-    private var mediaProjection: MediaProjection? = null
-    private var imageReader: ImageReader? = null
-    private lateinit var sessionDir: File
-    private lateinit var cameraExecutor: ExecutorService
+    private lateinit var faceRecognizer: FaceRecognizer
 
     private val handler = Handler(Looper.getMainLooper())
-    private var screenshotCount = 0
+    private val executor = Executors.newSingleThreadExecutor()
 
-    private val screenshotRunnable = object : Runnable {
-        override fun run() {
-            captureScreen()
-            // Capture every 10 seconds
-            handler.postDelayed(this, 10000)
-        }
-    }
+    private var mediaProjection: MediaProjection? = null
+    private var imageReader: ImageReader? = null
 
     override fun onCreate() {
         super.onCreate()
-        sessionManager = SessionManager(this)
-        cameraExecutor = Executors.newSingleThreadExecutor()
-    }
-
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        super.onStartCommand(intent, flags, startId)
-        Log.d("NabTheSpy_DEBUG", "SUCCESS! WatchModeService has started.")
+        faceRecognizer = FaceRecognizer(this)
 
         createNotificationChannel()
         startForeground(NOTIFICATION_ID, createNotification())
+    }
 
-        sessionManager.createNewSessionDirectory()?.let {
-            sessionDir = it
-            Log.d(TAG, "New session created. Taking selfie...")
-            takeSelfie()
-        } ?: run {
-            Log.e(TAG, "Failed to create session directory.")
-            stopSelf()
-        }
-
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        Log.d(TAG, "🚨 WatchModeService started")
+        takeSelfieAndVerify()
         return START_NOT_STICKY
     }
 
-    /**
-     * Take a selfie using CameraX front camera
-     */
-    private fun takeSelfie() {
-        val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
-        cameraProviderFuture.addListener({
+    /* ---------------------------------------------------------
+     * 📸 CAMERA + FACE VERIFICATION
+     * --------------------------------------------------------- */
+    private fun takeSelfieAndVerify() {
+        val providerFuture = ProcessCameraProvider.getInstance(this)
+
+        providerFuture.addListener({
             try {
-                val cameraProvider = cameraProviderFuture.get()
+                val cameraProvider = providerFuture.get()
+
                 val imageCapture = ImageCapture.Builder()
                     .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
                     .build()
 
-                val cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
-
-                // Dummy preview (CameraX requires a surface)
                 val preview = Preview.Builder().build()
                 preview.setSurfaceProvider { request ->
-                    request.provideSurface(
-                        android.view.Surface(SurfaceTexture(0)),
-                        cameraExecutor
-                    ) { }
+                    val surface = Surface(SurfaceTexture(0))
+                    request.provideSurface(surface, executor) {}
                 }
 
                 cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture)
+                cameraProvider.bindToLifecycle(
+                    this,
+                    CameraSelector.DEFAULT_FRONT_CAMERA,
+                    preview,
+                    imageCapture
+                )
 
-                imageCapture.takePicture(cameraExecutor, object : ImageCapture.OnImageCapturedCallback() {
-                    override fun onCaptureSuccess(image: ImageProxy) {
-                        Log.d(TAG, "Selfie captured successfully.")
-                        val bitmap = image.toBitmap()
-                        if (bitmap != null) {
-                            saveSelfie(bitmap)
-                            Log.d(TAG, "Saved selfie. Bitmap size: ${bitmap.width}x${bitmap.height}")
-                        } else {
-                            Log.e(TAG, "Failed to convert ImageProxy to Bitmap")
+                imageCapture.takePicture(
+                    executor,
+                    object : ImageCapture.OnImageCapturedCallback() {
+
+                        override fun onCaptureSuccess(image: ImageProxy) {
+                            val bitmap = image.toBitmap()
+                            image.close()
+
+                            if (bitmap != null) {
+                                verifyFace(bitmap)
+                            } else {
+                                Log.e(TAG, "Bitmap null → intruder assumed")
+                                startScreenCapture()
+                            }
                         }
-                        image.close()
-                        startScreenshotLoop()
-                    }
 
-                    override fun onError(exception: ImageCaptureException) {
-                        Log.e(TAG, "Selfie capture failed: ${exception.message}", exception)
-                        startScreenshotLoop()
+                        override fun onError(exception: ImageCaptureException) {
+                            Log.e(TAG, "Camera error → intruder assumed", exception)
+                            startScreenCapture()
+                        }
                     }
-                })
-            } catch (exc: Exception) {
-                Log.e(TAG, "CameraX binding failed", exc)
-                startScreenshotLoop()
+                )
+            } catch (e: Exception) {
+                Log.e(TAG, "Camera init failed", e)
+                startScreenCapture()
             }
         }, ContextCompat.getMainExecutor(this))
     }
 
-    /**
-     * ✅ Fixed: Proper MediaProjection setup for Android 14/15 and Samsung devices
-     */
-    private fun startScreenshotLoop() {
-        Log.d(TAG, "Initializing screen capture.")
-        val resultCode = AppMediaProjectionManager.resultCode
-        val projectionIntent = AppMediaProjectionManager.projectionIntent
+    private fun verifyFace(bitmap: Bitmap) {
+        val savedEmbedding = SecureStorageHelper.getMasterEmbedding(this)
 
-        if (resultCode != 0 && projectionIntent != null) {
-            val mediaProjectionManager =
-                getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
-            mediaProjection = mediaProjectionManager.getMediaProjection(resultCode, projectionIntent)
+        if (savedEmbedding == null) {
+            Log.e(TAG, "No saved face → intruder")
+            startScreenCapture()
+            return
+        }
 
-            val projection = mediaProjection ?: run {
-                Log.e(TAG, "MediaProjection is null.")
-                stopSelf()
-                return
+        faceRecognizer.getFaceEmbedding(bitmap) { current ->
+            if (current == null) {
+                Log.e(TAG, "Face not detected → intruder")
+                startScreenCapture()
+                return@getFaceEmbedding
             }
 
-            val metrics = resources.displayMetrics
-            imageReader = ImageReader.newInstance(
-                metrics.widthPixels,
-                metrics.heightPixels,
-                PixelFormat.RGBA_8888,
-                2
-            )
+            val distance = faceRecognizer.calculateDistance(savedEmbedding, current)
+            Log.d(TAG, "Face distance = $distance")
 
-            // ✅ Register callback BEFORE creating VirtualDisplay (Android 14+ requirement)
-            projection.registerCallback(object : MediaProjection.Callback() {
-                override fun onStop() {
-                    super.onStop()
-                    Log.d(TAG, "MediaProjection stopped.")
-                    imageReader?.close()
-                    handler.removeCallbacks(screenshotRunnable)
-                }
-            }, handler)
-
-            try {
-                projection.createVirtualDisplay(
-                    "ScreenCapture",
-                    metrics.widthPixels,
-                    metrics.heightPixels,
-                    metrics.densityDpi,
-                    DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
-                    imageReader?.surface,
-                    null,
-                    handler
-                )
-                Log.d(TAG, "Virtual display created successfully. Starting screenshot loop.")
-                handler.post(screenshotRunnable)
-
-            } catch (e: IllegalStateException) {
-                Log.e(TAG, "Failed to create virtual display: ${e.message}", e)
+            if (distance <= FaceRecognizer.EMBEDDING_DISTANCE_THRESHOLD) {
+                Log.d(TAG, "✅ Owner verified → stopping")
                 stopSelf()
+            } else {
+                Log.d(TAG, "❌ Intruder detected → screen capture")
+                startScreenCapture()
             }
-        } else {
-            Log.e(TAG, "MediaProjection permission is missing. Stopping service.")
-            stopSelf()
         }
     }
 
-    /**
-     * Capture screen frame from ImageReader
-     */
+    /* ---------------------------------------------------------
+     * 🖥 MEDIA PROJECTION (SCREEN CAPTURE)
+     * --------------------------------------------------------- */
+    private fun startScreenCapture() {
+        if (mediaProjection != null) return
+
+        val resultCode = AppMediaProjectionManager.resultCode
+        val permissionIntent = AppMediaProjectionManager.projectionIntent
+
+        if (permissionIntent == null) {
+            Log.e(TAG, "❌ MediaProjection permission missing")
+            stopSelf()
+            return
+        }
+
+        val manager =
+            getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+
+        mediaProjection = manager.getMediaProjection(resultCode, permissionIntent)
+
+        val metrics = resources.displayMetrics
+
+        imageReader = ImageReader.newInstance(
+            metrics.widthPixels,
+            metrics.heightPixels,
+            PixelFormat.RGBA_8888,
+            2
+        )
+
+        mediaProjection?.createVirtualDisplay(
+            "NabTheSpyScreen",
+            metrics.widthPixels,
+            metrics.heightPixels,
+            metrics.densityDpi,
+            DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
+            imageReader!!.surface,
+            null,
+            handler
+        )
+
+        handler.post(screenRunnable)
+    }
+
+    private val screenRunnable = object : Runnable {
+        override fun run() {
+            captureScreen()
+            handler.postDelayed(this, 10_000)
+        }
+    }
+
     private fun captureScreen() {
         val image = imageReader?.acquireLatestImage() ?: return
-        val planes = image.planes
-        val buffer = planes[0].buffer
-        val pixelStride = planes[0].pixelStride
-        val rowStride = planes[0].rowStride
+
+        val plane = image.planes[0]
+        val buffer = plane.buffer
+        val pixelStride = plane.pixelStride
+        val rowStride = plane.rowStride
         val rowPadding = rowStride - pixelStride * image.width
 
         val bitmap = Bitmap.createBitmap(
@@ -201,73 +208,63 @@ class WatchModeService : LifecycleService() {
             image.height,
             Bitmap.Config.ARGB_8888
         )
+
         bitmap.copyPixelsFromBuffer(buffer)
         image.close()
 
-        sessionManager.saveScreenCapture(sessionDir, bitmap, screenshotCount)
-        Log.d(TAG, "Saved screen capture #$screenshotCount")
-        screenshotCount++
-    }
+        val cropped = Bitmap.createBitmap(bitmap, 0, 0, image.width, image.height)
 
-    private fun saveSelfie(bitmap: Bitmap) {
-        val destinationFile = File(sessionDir, "snapshot.jpg")
-        try {
-            FileOutputStream(destinationFile).use { out ->
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
-            }
-        } catch (e: IOException) {
-            Log.e(TAG, "Failed to save selfie.", e)
+        val file = File(filesDir, "screen_${System.currentTimeMillis()}.jpg")
+        FileOutputStream(file).use {
+            cropped.compress(Bitmap.CompressFormat.JPEG, 85, it)
         }
+
+        Log.d(TAG, "📸 Screen saved: ${file.absolutePath}")
     }
 
     override fun onDestroy() {
-        super.onDestroy()
-        handler.removeCallbacks(screenshotRunnable)
-        mediaProjection?.stop()
+        handler.removeCallbacks(screenRunnable)
         imageReader?.close()
-        cameraExecutor.shutdown()
-        Log.d(TAG, "WatchModeService destroyed.")
+        mediaProjection?.stop()
+        executor.shutdown()
+        super.onDestroy()
     }
 
-    override fun onBind(intent: Intent): IBinder? {
-        super.onBind(intent)
-        return null
-    }
-
+    /* ---------------------------------------------------------
+     * 🔔 NOTIFICATION
+     * --------------------------------------------------------- */
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val serviceChannel = NotificationChannel(
+            val channel = NotificationChannel(
                 CHANNEL_ID,
-                "Watch Mode Service Channel",
-                NotificationManager.IMPORTANCE_DEFAULT
+                "Watch Mode",
+                NotificationManager.IMPORTANCE_HIGH
             )
-            getSystemService(NotificationManager::class.java)?.createNotificationChannel(serviceChannel)
+            getSystemService(NotificationManager::class.java)
+                .createNotificationChannel(channel)
         }
     }
 
-    private fun createNotification(): Notification {
-        return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("NabTheSpy is Active")
-            .setContentText("Monitoring for unauthorized access.")
+    private fun createNotification(): Notification =
+        NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle("NabTheSpy Active")
+            .setContentText("Intruder monitoring in progress")
             .setSmallIcon(R.drawable.ic_security_shield)
-            .setOngoing(true) // Keeps service alive
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setOngoing(true)
             .build()
-    }
 
     companion object {
-        private const val TAG = "NabTheSpy_Service"
-        const val CHANNEL_ID = "WatchModeServiceChannel"
-        const val NOTIFICATION_ID = 1
+        private const val TAG = "WatchModeService"
+        private const val CHANNEL_ID = "watch_mode_channel"
+        private const val NOTIFICATION_ID = 201
     }
 }
 
-/**
- * Extension to convert ImageProxy to Bitmap
- */
+/* ---------------------------------------------------------
+ * 🔧 ImageProxy → Bitmap
+ * --------------------------------------------------------- */
 private fun ImageProxy.toBitmap(): Bitmap? {
-    val planeProxy = planes.firstOrNull() ?: return null
-    val buffer = planeProxy.buffer
+    val buffer = planes.firstOrNull()?.buffer ?: return null
     buffer.rewind()
     val bytes = ByteArray(buffer.remaining())
     buffer.get(bytes)

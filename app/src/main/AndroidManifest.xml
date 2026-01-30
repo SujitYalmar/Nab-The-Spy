@@ -2,25 +2,20 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Standard Camera Permission -->
+    <!-- ===== FEATURES ===== -->
     <uses-feature
         android:name="android.hardware.camera.any"
         android:required="true" />
+
+    <!-- ===== PERMISSIONS ===== -->
     <uses-permission android:name="android.permission.CAMERA" />
-
-    <!-- General Foreground Service Permission -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-
-    <!-- Permissions for Specific Foreground Service Types -->
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
-    <!-- ✅ ADD THIS REQUIRED PERMISSION FOR ANDROID 14+ -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA" />
-
-
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-
+    <uses-permission android:name="android.permission.WAKE_LOCK" /> <!-- ✅ NEW -->
 
     <application
         android:allowBackup="true"
@@ -32,7 +27,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Nabthespy">
 
-        <!-- Your Activities -->
+        <!-- ===== ACTIVITIES ===== -->
         <activity
             android:name=".SplashActivity"
             android:exported="true">
@@ -41,19 +36,25 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <activity android:name=".MainActivity" android:exported="false" />
         <activity android:name=".KeySetupActivity" android:exported="false" />
         <activity android:name=".KeyLoginActivity" android:exported="false" />
         <activity android:name=".HomeActivity" android:exported="false" />
         <activity android:name=".FaceRegistrationActivity" android:exported="false" />
         <activity android:name=".SessionDetailActivity" android:exported="false" />
+
         <activity
             android:name=".CameraCaptureActivity"
             android:exported="false"
             android:theme="@style/Theme.Transparent" />
 
-        <!-- Your Services -->
-        <service android:name=".FaceCaptureService" />
+        <!-- ===== SERVICES ===== -->
+        <service
+            android:name=".FaceCaptureService"
+            android:exported="false"
+            android:foregroundServiceType="camera" />
+
         <service
             android:name=".WatchModeService"
             android:enabled="true"
@@ -61,18 +62,37 @@
             android:foregroundServiceType="mediaProjection|camera"
             tools:ignore="ForegroundServicePermission" />
 
-        <!-- Your Receiver -->
+        <service
+            android:name=".DetectionService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="camera|mediaProjection" />
+
+        <!-- ===== UNLOCK RECEIVER (SUCCESSFUL UNLOCK) ===== -->
         <receiver
             android:name=".UnlockReceiver"
             android:enabled="true"
-            android:exported="true"
-            tools:ignore="ExportedReceiver">
+            android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.USER_PRESENT" />
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
 
+        <!-- ===== DEVICE ADMIN RECEIVER (🔥 WRONG PASSWORD DETECTION) ===== -->
+        <receiver
+            android:name=".SecurityAdminReceiver"
+            android:permission="android.permission.BIND_DEVICE_ADMIN"
+            android:exported="true">
+            <meta-data
+                android:name="android.app.device_admin"
+                android:resource="@xml/device_admin_receiver" />
+            <intent-filter>
+                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- ===== ADS (UNCHANGED) ===== -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-3940256099942544~3347511713" />
@@ -80,4 +100,3 @@
     </application>
 
 </manifest>
-
